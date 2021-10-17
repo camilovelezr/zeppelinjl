@@ -1,0 +1,6 @@
+[deps]
+CordraClient = "9b7dba48-593b-43c8-b146-7a84bfe01e50"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+NeXLParticle = "9f92fee6-ed62-42c3-b009-0e4f934456c2"
+PeriodicTable = "7b2266bf-644c-5ea3-82d8-af4bbd25a884"
+TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
