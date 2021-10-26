@@ -223,10 +223,10 @@ uuid = "150eb455-5306-5404-9cee-2592286d6298"
 version = "0.6.1"
 
 [[CordraClient]]
-deps = ["HTTP", "JSON", "Reexport", "URIs"]
-git-tree-sha1 = "5ec5c91af754585696dd7912863daea87f1afaaa"
-repo-rev = "master"
-repo-url = "https://github.com/usnistgov/CordraClient.jl"
+deps = ["DataFrames", "DataStructures", "HTTP", "JSON", "Reexport", "URIs"]
+git-tree-sha1 = "f3dc108179ddd228c2273664d5210d9006d3aa1b"
+repo-rev = "cvr"
+repo-url = "https://github.com/usnistgov/CordraClient.jl.git"
 uuid = "9b7dba48-593b-43c8-b146-7a84bfe01e50"
 version = "0.1.0-dev"
 

@@ -5,6 +5,7 @@ using DataFrames
 using Dates
 using TimeZones
 using DataStructures
+using UUIDs
 
 path = "/media/camilovelezr/D/NIST/GSRData_Management/Shooter #1 - Zero time/APA/Analysis 2019-07-17 10.58.57.-0400/data.hdz"
 
@@ -29,8 +30,11 @@ function normalize_elements(z::Zeppelin)
     rename!(renel, z.data)
 end
 
-names(t.data)
+last(names(t.data), 17)
+# mut struct?
+normalize_elements(t)
 
+last(names(t.data), 17)
 
 """
     cleandate(x::AbstractString)::Date
@@ -46,6 +50,7 @@ function cleandate(x::AbstractString, f::DateFormat)::Date
     return Dates.Date(replace(x, "/"=>"-"), f)
 end
 
+t.header["ANALYSIS_DATE"]
 
 """
     splitvalue(x::AbstractString)::AbstractDict
@@ -91,8 +96,8 @@ function to_datetime(date::AbstractString, time::AbstractString, format::Abstrac
 end
 
 
-function magkv(x::AbstractString, unit::AbstractString)::AbstractVector
-    return ["value" => tryparse(Float64, x), "unitText"=>unit]
+function magkv(x::AbstractString, unit::AbstractString)::AbstractDict # Vector or Dict?
+    return Dict(["value" => tryparse(Float64, x), "unitText"=>unit])
 end
 
 """
@@ -110,5 +115,61 @@ function mapmag(z::Zeppelin)
     return h
 end
 
+function clean_headers(z::Zeppelin)
+    d = convert(OrderedDict{String, Any}, Dict(copy(z.header)))
+
+    d["ANALYSIS_DATE"] = cleandate(d["ANALYSIS_DATE"])
+    d["DATETIME"] = to_datetime(d["ANALYSIS_DATE"], d["START_TIME"])
+
+    d["ACCELERATING_VOLTAGE"] = splitvalue(d["ACCELERATING_VOLTAGE"])
+    d["PROBE_CURRENT"] = splitvalue(d["PROBE_CURRENT"])
+
+    mag_fmt = collect(map(uppercase, split(d["MAG_FMT"])))
+    mag0 = split(d["MAG0"])
+    d[mag_fmt[1]*"_DATA"] = magkv(mag0[1], "Assuming a 3.5 in field of view")
+    d[mag_fmt[2]] = magkv(mag0[2], "")
+    d[mag_fmt[3]] = magkv(mag0[3], "")
+    d[mag_fmt[4]*"_DATA"] = magkv(mag0[4], "sq mm")
+
+    return d
+end
+
+
+
+mutable struct ZepUp # Zeppelin to upload to Cordra
+    z::Zeppelin
+    samplemeta::AbstractDict
+    morph::DataFrame
+
+    
+    function ZepUp(
+        headerfile::AbstractString
+    )
+        morph_cols = collect(NeXLParticle.MORPH_COLS)
+        z = Zeppelin(headerfile)
+        normalize_elements(z)
+        new(
+            z,
+            clean_headers(z),
+            select(z.data, morph_cols)
+        )
+    end
+ end
+
+
+test = ZepUp(path)
+
+
+
+function upload_metadata(z::ZepUp, cc::CordraConnection)
+    obj = z.samplemeta
+    obj["CamiloExplore"] = 1
+    uuid = split(string(UUIDs.uuid4()), "-")[2]
+    create_object(cc, obj, "Material", suffix = "gsr-2019-"*uuid)
+end
+
+cs = CordraConnection("https://localhost:8443", "admin"; verify = false)
+
+upload_metadata(test, cs)
 
 
